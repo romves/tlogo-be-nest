@@ -26,19 +26,19 @@ model UMKM {
   rentang_harga     String
   kelengkapan_surat String
   foto              FotoUMKM[]
-  kategori          Kategori[]
+  kategori          String
 
   @@map("umkm")
 }
 
-model Kategori {
-  id   Int    @id @default(autoincrement())
-  nama String
+// model Kategori {
+//   id   Int    @id @default(autoincrement())
+//   nama String
 
-  umkm UMKM[]
+//   umkm UMKM[]
 
-  @@map("kategori")
-}
+//   @@map("kategori")
+// }
 
 model FotoUMKM {
   id       String @id @default(cuid())

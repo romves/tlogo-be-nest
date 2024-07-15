@@ -4,14 +4,6 @@ const prisma = new PrismaClient();
 async function main() {
   const cuidUmkm = 'cjozv9v5z0000a3z1z1q6z7z1';
   const cuidFoto = 'cjozv9v5z0000a3z1z1q6z7z1';
-  const kategori = await prisma.kategori.upsert({
-    where: { id: 1 },
-    update: {},
-    create: {
-      id: 1,
-      nama: 'Makanan',
-    },
-  });
   const umkm1 = await prisma.uMKM.upsert({
     where: { id: cuidUmkm },
     update: {},
@@ -30,14 +22,10 @@ async function main() {
           url_foto: 'https://via.placeholder.com/150',
         },
       },
-      kategori: {
-        connect: {
-          id: 1,
-        },
-      },
+      kategori: 'Makanan Ringan'
     },
   });
-  console.log({ umkm1, kategori });
+  console.log({ umkm1 });
 }
 main()
   .then(async () => {

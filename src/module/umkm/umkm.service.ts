@@ -10,7 +10,6 @@ export class UmkmService {
     const umkms = await this.prisma.uMKM.findMany({
       include: {
         foto: true,
-        kategori: true,
       },
     });
     return {
@@ -46,11 +45,7 @@ export class UmkmService {
         nomor_hp: data.nomor_hp,
         rentang_harga: data.rentang_harga,
         kelengkapan_surat: data.kelengkapan_surat,
-        kategori: {
-          connect: {
-            id: data.kategori_id,
-          },
-        },
+        kategori: data.kategori,
         foto: {
           create: data.foto.map((foto: any) => ({
             ...foto,
@@ -111,22 +106,6 @@ export class UmkmService {
   
         if (!umkm) throw new HttpException('Umkm not found', 404);
   
-
-        if (data.kategori_id) {
-          await tx.uMKM.update({
-            where: {
-              id,
-            },
-            data: {
-              kategori: {
-                connect: {
-                  id: data.kategori_id,
-                },
-              },
-            },
-          });
-        }
-  
         if (data.foto) {
           await tx.fotoUMKM.deleteMany({
             where: {
@@ -155,6 +134,7 @@ export class UmkmService {
             nomor_hp: data.nomor_hp,
             rentang_harga: data.rentang_harga,
             kelengkapan_surat: data.kelengkapan_surat,
+            kategori: data.kategori,
           },
         });
 

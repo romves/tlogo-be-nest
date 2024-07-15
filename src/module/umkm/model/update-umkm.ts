@@ -8,7 +8,7 @@ export const updateUmkmSchema = z.object({
   nomor_hp: z.string().min(1).max(255),
   rentang_harga: z.string().min(1).max(255),
   kelengkapan_surat: z.string().min(1).max(255),
-  kategori_id: z.string(),
+  kategori: z.string(),
   foto: z.array(
     z.object({
       url_foto: z.string().min(1).max(255),
