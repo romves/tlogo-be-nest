@@ -1,0 +1,51 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // provider = "mysql"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // url      = "mysql://root:@localhost:3306/tlogodb"
+  directUrl = env("DIRECT_URL")
+}
+
+model UMKM {
+  id                String     @id @default(cuid())
+  nama              String
+  deskripsi         String
+  alamat            String
+  nama_pemilik      String
+  nomor_hp          String
+  rentang_harga     String
+  kelengkapan_surat String
+  foto              FotoUMKM[]
+  kategori          Kategori[]
+
+  @@map("umkm")
+}
+
+model Kategori {
+  id   Int    @id @default(autoincrement())
+  nama String
+
+  umkm UMKM[]
+
+  @@map("kategori")
+}
+
+model FotoUMKM {
+  id       String @id @default(cuid())
+  url_foto String
+
+  umkm_id String
+  umkm    UMKM   @relation(fields: [umkm_id], references: [id])
+
+  @@map("foto_umkm")
+}
