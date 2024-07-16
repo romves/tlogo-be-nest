@@ -8,18 +8,15 @@ import {
   Param,
   Post,
   Put,
-  Query,
   UploadedFile,
-  UseInterceptors,
+  UseInterceptors
 } from '@nestjs/common';
-import { UmkmService } from './umkm.service';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
-import { TransformInterceptor } from 'src/interceptors/transform/transform.interceptor';
 import { ValidationPipe } from 'src/validation/validation.pipe';
 import { CreateUmkm, createUmkmSchema } from './model/create-umkm';
-import { UMKM } from '@prisma/client';
 import { UpdateUmkm, updateUmkmSchema } from './model/update-umkm';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { UmkmService } from './umkm.service';
 
 @Controller('umkm')
 export class UmkmController {

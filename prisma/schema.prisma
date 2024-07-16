@@ -10,8 +10,8 @@ generator client {
 
 datasource db {
   // provider = "mysql"
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   // url      = "mysql://root:@localhost:3306/tlogodb"
   directUrl = env("DIRECT_URL")
 }
@@ -19,14 +19,15 @@ datasource db {
 model UMKM {
   id                String     @id @default(cuid())
   nama              String
-  deskripsi         String
   alamat            String
+  koordinat_umkm    String
   nama_pemilik      String
   nomor_hp          String
   rentang_harga     String
   kelengkapan_surat String
   foto              FotoUMKM[]
-  kategori          String
+  produk            String
+  volume            String?
 
   @@map("umkm")
 }

@@ -13,7 +13,6 @@ async function main() {
       alamat: 'Jl. Raya',
       nomor_hp: '08123456789',
       nama_pemilik: 'Pemilik 1',
-      deskripsi: '',
       kelengkapan_surat: 'NPWP',
       rentang_harga: '> 200.000',
       foto: {
@@ -22,7 +21,9 @@ async function main() {
           url_foto: 'https://via.placeholder.com/150',
         },
       },
-      kategori: 'Makanan Ringan'
+      produk: 'Makanan Ringan',
+      koordinat_umkm: '-8.122907,112.1971171',
+      volume: '120ml'
     },
   });
   console.log({ umkm1 });

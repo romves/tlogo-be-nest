@@ -40,13 +40,14 @@ export class UmkmService {
       data: {
         id: createId(),
         nama: data.nama,
-        deskripsi: data.deskripsi,
         alamat: data.alamat,
+        koordinat_umkm: data.koordinat_umkm,
         nama_pemilik: data.nama_pemilik,
         nomor_hp: data.nomor_hp,
         rentang_harga: data.rentang_harga,
         kelengkapan_surat: data.kelengkapan_surat,
-        kategori: data.kategori,
+        produk: data.produk,
+        volume: data.volume,
         foto: {
           create: data.foto.map((foto: any) => ({
             ...foto,
@@ -63,6 +64,7 @@ export class UmkmService {
   }
 
   async deleteUmkm(id: string) {
+    // TODO Implement Transaction
     try {
       const umkm = await this.prisma.uMKM.findFirstOrThrow({
         where: {
@@ -129,13 +131,14 @@ export class UmkmService {
           },
           data: {
             nama: data.nama,
-            deskripsi: data.deskripsi,
             alamat: data.alamat,
+            koordinat_umkm: data.koordinat_umkm,
             nama_pemilik: data.nama_pemilik,
             nomor_hp: data.nomor_hp,
             rentang_harga: data.rentang_harga,
             kelengkapan_surat: data.kelengkapan_surat,
-            kategori: data.kategori,
+            produk: data.produk,
+            volume: data.volume,
           },
         });
 
@@ -156,7 +159,7 @@ export class UmkmService {
 
   async createUmkmBatchCSV(file: any) {
     const data = Readable.from(file.buffer);
-    
+
     const parsedData = await new Promise((resolve, reject) => {
       parse(data, {
         header: true,
@@ -174,7 +177,7 @@ export class UmkmService {
 
             return row;
           });
-          
+
           resolve(cleanedData);
         },
         error: (error) => {
@@ -182,7 +185,7 @@ export class UmkmService {
         },
       });
     });
-  
+
     return {
       message: 'Success',
       data: parsedData,
