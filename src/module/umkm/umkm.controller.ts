@@ -9,6 +9,7 @@ import {
   Post,
   Put,
   Query,
+  UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { UmkmService } from './umkm.service';
@@ -18,6 +19,7 @@ import { ValidationPipe } from 'src/validation/validation.pipe';
 import { CreateUmkm, createUmkmSchema } from './model/create-umkm';
 import { UMKM } from '@prisma/client';
 import { UpdateUmkm, updateUmkmSchema } from './model/update-umkm';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('umkm')
 export class UmkmController {
@@ -36,6 +38,12 @@ export class UmkmController {
   @Post('/')
   create(@Body(new ValidationPipe(createUmkmSchema)) body: CreateUmkm) {
     return this.service.createUmkm(body);
+  }
+
+  @Post('/batch')
+  @UseInterceptors(FileInterceptor('csv'))
+  createBatch(@UploadedFile() file: any) {
+    return this.service.createUmkmBatchCSV(file);
   }
 
   @Put('/:id')

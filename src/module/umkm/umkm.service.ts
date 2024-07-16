@@ -1,6 +1,8 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { createId } from '@paralleldrive/cuid2';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { parse } from 'papaparse';
+import { Readable } from 'stream';
 
 @Injectable()
 export class UmkmService {
@@ -34,7 +36,6 @@ export class UmkmService {
   }
 
   async createUmkm(data: any) {
-    console.log(data);
     const umkm = await this.prisma.uMKM.create({
       data: {
         id: createId(),
@@ -103,16 +104,16 @@ export class UmkmService {
             id,
           },
         });
-  
+
         if (!umkm) throw new HttpException('Umkm not found', 404);
-  
+
         if (data.foto) {
           await tx.fotoUMKM.deleteMany({
             where: {
               umkm_id: id,
             },
           });
-  
+
           await tx.fotoUMKM.createMany({
             data: data.foto.map((foto: any) => ({
               ...foto,
@@ -121,7 +122,7 @@ export class UmkmService {
             })),
           });
         }
-  
+
         const umkmUpdated = await tx.uMKM.update({
           where: {
             id,
@@ -139,18 +140,52 @@ export class UmkmService {
         });
 
         return umkmUpdated;
-      })  
+      });
 
       return {
         message: 'Update success',
         data: transaction,
       };
-      
     } catch (error) {
       return {
         message: 'Umkm not found',
-        data: null
-      }
+        data: null,
+      };
     }
+  }
+
+  async createUmkmBatchCSV(file: any) {
+    const data = Readable.from(file.buffer);
+    
+    const parsedData = await new Promise((resolve, reject) => {
+      parse(data, {
+        header: true,
+        worker: true,
+        complete: (results) => {
+          const cleanedData = results.data.map((row) => {
+            // delete row['Timestamp'];
+            // delete row['Nama Produk'];
+            // delete row['Produk'];
+            delete row['Volume'];
+            delete row['Harga'];
+            delete row['Email Address'];
+            delete row['Nama Produk_1'];
+            // delete row['Volume'];
+
+            return row;
+          });
+          
+          resolve(cleanedData);
+        },
+        error: (error) => {
+          reject(error);
+        },
+      });
+    });
+  
+    return {
+      message: 'Success',
+      data: parsedData,
+    };
   }
 }
