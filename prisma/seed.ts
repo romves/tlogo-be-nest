@@ -22,8 +22,8 @@ async function main() {
         },
       },
       produk: 'Makanan Ringan',
-      koordinat_umkm: '-8.122907,112.1971171',
-      volume: '120ml'
+      koordinat_umkm: ['-8.122907', '112.1971171'],
+      volume: '120ml',
     },
   });
   console.log({ umkm1 });

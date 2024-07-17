@@ -20,7 +20,7 @@ model UMKM {
   id                String     @id @default(cuid())
   nama              String
   alamat            String
-  koordinat_umkm    String
+  koordinat_umkm    String[]
   nama_pemilik      String
   nomor_hp          String
   rentang_harga     String
