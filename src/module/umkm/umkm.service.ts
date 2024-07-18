@@ -160,7 +160,7 @@ export class UmkmService {
       parse(data, {
         header: true,
         worker: true,
-        complete: (results) => {
+        complete: async (results) => {
           const cleanedData = results.data
             .map((row) => {
               // delete row['Timestamp'];
@@ -181,29 +181,55 @@ export class UmkmService {
             })
             .filter((row) => row != null || row != undefined);
 
-          const umkms = this.prisma.$transaction(async (tx) => {
-            const umkm = await tx.uMKM.createMany({
-              data: cleanedData.map((data: any) => {
-                return {
-                  id: createId(),
-                  nama: data['Nama Toko'],
-                  alamat: 'Alamat',
-                  koordinat_umkm: this.convertCoordinate(
-                    data['Titik Koordinat Toko'],
-                  ),
-                  nama_pemilik: data['Nama Pemilik'],
-                  nomor_hp: data['Nomor HP'],
-                  rentang_harga: data['Rentang Harga'] ?? '',
-                  kelengkapan_surat: data['Surat'],
-                  produk: data['Produk'],
-                  volume: data['Volume'] ?? '',
-                };
-              }),
-            });
-
-            return umkm;
+          // find existing umkms by koordinat
+          const existingUmkms = await this.prisma.uMKM.findMany({
+            where: {
+              koordinat_umkm: {
+                equals: cleanedData.flatMap((data: any) =>
+                  this.convertCoordinate(data['Titik Koordinat Toko']),
+                ),
+              },
+            },
           });
-          resolve(umkms);
+
+          // // remove existing umkms from cleanedData
+          // cleanedData.forEach((data: any) => {
+          //   const index = existingUmkms.findIndex(
+          //     (umkm) =>
+          //       umkm.koordinat_umkm[0] == data['Titik Koordinat Toko'].split(',')[0] &&
+          //       umkm.koordinat_umkm[1] == data['Titik Koordinat Toko'].split(',')[1],
+          //   );
+
+          //   if (index != -1) {
+          //     existingUmkms.splice(index, 1);
+          //   }
+          // });
+
+          // remove umkms with older timestamp than the last in db
+
+          // const umkms = this.prisma.$transaction(async (tx) => {
+          //   const umkm = await tx.uMKM.createMany({
+          //     data: cleanedData.map((data: any) => {
+          //       return {
+          //         id: createId(),
+          //         nama: data['Nama Toko'],
+          //         alamat: 'Alamat',
+          //         koordinat_umkm: this.convertCoordinate(
+          //           data['Titik Koordinat Toko'],
+          //         ),
+          //         nama_pemilik: data['Nama Pemilik'],
+          //         nomor_hp: data['Nomor HP'],
+          //         rentang_harga: data['Rentang Harga'] ?? '',
+          //         kelengkapan_surat: data['Surat'],
+          //         produk: data['Produk'],
+          //         volume: data['Volume'] ?? '',
+          //       };
+          //     }),
+          //   });
+
+          //   return umkm;
+          // });
+          resolve(cleanedData);
         },
         error: (error) => {
           reject(error);

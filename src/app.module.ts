@@ -5,12 +5,13 @@ import { AppService } from './app.service';
 import { AuthModule } from './module/auth/auth.module';
 import { UmkmModule } from './module/umkm/umkm.module';
 
-import { UsersModule } from './module/users/users.module';
 // import { CommonModule } from './module/common/common.module';
 import { PrismaModule } from './module/common/prisma/prisma.module';
 import { ValidationModule } from './module/common/validation/validation.module';
 import { ErrorFilter } from './module/common/filter/error/error.filter';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { JwtGuard } from './module/auth/guard/jwt/jwt.guard';
+import { UserModule } from './module/users/user.module';
 
 @Global()
 @Module({
@@ -22,7 +23,7 @@ import { APP_FILTER } from '@nestjs/core';
     UmkmModule,
     ValidationModule,
     AuthModule,
-    UsersModule,
+    UserModule,
     // CommonModule,
   ],
   controllers: [AppController],
@@ -32,6 +33,6 @@ import { APP_FILTER } from '@nestjs/core';
       provide: APP_FILTER,
       useClass: ErrorFilter,
     },
-  ],
+  ],  
 })
 export class AppModule {}

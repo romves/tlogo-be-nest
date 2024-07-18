@@ -16,11 +16,26 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model User {
+  id       String @id @default(cuid())
+  username String @unique
+  password String
+  // role     Role   @default(USER)
+
+  @@map("user")
+}
+
+// enum Role {
+//   ADMIN
+//   USER
+// }
+
 model UMKM {
   id                String     @id @default(cuid())
+  sheet_timestamp   DateTime?
   nama              String
   alamat            String
-  koordinat_umkm    String[]   @unique()
+  koordinat_umkm    String[]
   nama_pemilik      String
   nomor_hp          String
   rentang_harga     String
