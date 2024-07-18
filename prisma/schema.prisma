@@ -20,11 +20,11 @@ model UMKM {
   id                String     @id @default(cuid())
   nama              String
   alamat            String
-  koordinat_umkm    String[]
+  koordinat_umkm    String[]   @unique()
   nama_pemilik      String
   nomor_hp          String
   rentang_harga     String
-  kelengkapan_surat String
+  kelengkapan_surat String?
   foto              FotoUMKM[]
   produk            String
   volume            String?

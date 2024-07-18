@@ -4,6 +4,6 @@ import { UmkmService } from './umkm.service';
 
 @Module({
   controllers: [UmkmController],
-  providers: [UmkmService, ]
+  providers: [UmkmService]
 })
 export class UmkmModule {}

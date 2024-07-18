@@ -13,10 +13,10 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
-import { ValidationPipe } from 'src/validation/validation.pipe';
 import { CreateUmkm, createUmkmSchema } from './model/create-umkm';
 import { UpdateUmkm, updateUmkmSchema } from './model/update-umkm';
 import { UmkmService } from './umkm.service';
+import { ZodValidationPipe } from '../common/validation/zod-validation.pipe';
 
 @Controller('umkm')
 export class UmkmController {
@@ -33,7 +33,7 @@ export class UmkmController {
   }
 
   @Post('/')
-  create(@Body(new ValidationPipe(createUmkmSchema)) body: CreateUmkm) {
+  create(@Body(new ZodValidationPipe(createUmkmSchema)) body: CreateUmkm) {
     return this.service.createUmkm(body);
   }
 
@@ -46,7 +46,7 @@ export class UmkmController {
   @Put('/:id')
   update(
     @Param('id') id: string,
-    @Body(new ValidationPipe(updateUmkmSchema)) body: UpdateUmkm,
+    @Body(new ZodValidationPipe(updateUmkmSchema)) body: UpdateUmkm,
   ) {
     return this.service.updateUmkm(id, body);
   }
