@@ -26,6 +26,9 @@ export class UmkmService {
       where: {
         id,
       },
+      include: {
+        foto: true,
+      },
     });
 
     if (!umkm) throw new HttpException('Umkm not found', 404);
@@ -181,17 +184,6 @@ export class UmkmService {
             })
             .filter((row) => row != null || row != undefined);
 
-          // find existing umkms by koordinat
-          const existingUmkms = await this.prisma.uMKM.findMany({
-            where: {
-              koordinat_umkm: {
-                equals: cleanedData.flatMap((data: any) =>
-                  this.convertCoordinate(data['Titik Koordinat Toko']),
-                ),
-              },
-            },
-          });
-
           // // remove existing umkms from cleanedData
           // cleanedData.forEach((data: any) => {
           //   const index = existingUmkms.findIndex(
@@ -207,29 +199,41 @@ export class UmkmService {
 
           // remove umkms with older timestamp than the last in db
 
-          // const umkms = this.prisma.$transaction(async (tx) => {
-          //   const umkm = await tx.uMKM.createMany({
-          //     data: cleanedData.map((data: any) => {
-          //       return {
-          //         id: createId(),
-          //         nama: data['Nama Toko'],
-          //         alamat: 'Alamat',
-          //         koordinat_umkm: this.convertCoordinate(
-          //           data['Titik Koordinat Toko'],
-          //         ),
-          //         nama_pemilik: data['Nama Pemilik'],
-          //         nomor_hp: data['Nomor HP'],
-          //         rentang_harga: data['Rentang Harga'] ?? '',
-          //         kelengkapan_surat: data['Surat'],
-          //         produk: data['Produk'],
-          //         volume: data['Volume'] ?? '',
-          //       };
-          //     }),
-          //   });
+          const umkms = await Promise.all(
+            cleanedData.map(async (data) => {
+              const allFotos = [
+                ...(data['Foto Produk'] ? data['Foto Produk'].split(',') : []),
+                ...(data['Gambar UMKM'] ? data['Gambar UMKM'].split(',') : []),
+              ];
 
-          //   return umkm;
-          // });
-          resolve(cleanedData);
+              const umkm = await this.prisma.uMKM.create({
+                data: {
+                  id: createId(),
+                  nama: data['Nama Toko'],
+                  alamat: data['Alamat'] ?? '',
+                  koordinat_umkm: this.convertCoordinate(
+                    data['Titik Koordinat Toko'],
+                  ),
+                  nama_pemilik: data['Nama Pemilik'],
+                  nomor_hp: data['Nomor HP'],
+                  rentang_harga: data['Rentang Harga'] ?? '',
+                  kelengkapan_surat: data['Surat'],
+                  produk: data['Produk'],
+                  volume: data['Volume'] ?? '',
+                  foto: {
+                    create: allFotos.map((foto) => ({
+                      id: createId(),
+                      url_foto: this.convertGoogleDriveImageUrl(foto),
+                    })),
+                  },
+                },
+              });
+
+              return umkm;
+            }),
+          );
+
+          resolve(umkms);
         },
         error: (error) => {
           reject(error);
@@ -254,5 +258,13 @@ export class UmkmService {
     }
 
     return converted;
+  }
+
+  convertGoogleDriveImageUrl(url: string) {
+    const splitUrl = url.split('id=');
+    const fileId = splitUrl[1];
+    const convertedUrl = `https://drive.google.com/thumbnail?id=${fileId}`;
+
+    return convertedUrl;
   }
 }
