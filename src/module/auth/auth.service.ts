@@ -16,12 +16,16 @@ export class AuthService {
       where: { username },
     });
 
-    console.log(user);
+    console.log(user); 
 
     if (user && (await bcrypt.compareSync(password, user.password))) {
       return {
         message: 'success',
         data: {
+          user: {
+            id: user.id,
+            username: user.username,
+          },
           accessToken: this.jwtService.sign({ username }),
         },
       };
