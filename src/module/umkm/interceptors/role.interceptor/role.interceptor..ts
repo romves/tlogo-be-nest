@@ -50,7 +50,6 @@ export class OmitDataByRoleInterceptor implements NestInterceptor {
 
   private omitKelengkapanSurat(data: any): any {
     if (!Array.isArray(data)) {
-      console.log(data);
       return data;
     }
 

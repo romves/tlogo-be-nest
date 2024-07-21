@@ -16,7 +16,7 @@ export class AuthService {
       where: { username },
     });
 
-    console.log(user); 
+    // console.log(user); 
 
     if (user && (await bcrypt.compareSync(password, user.password))) {
       const jwtPayload = { id: user.id, username: user.username, role: user.role };

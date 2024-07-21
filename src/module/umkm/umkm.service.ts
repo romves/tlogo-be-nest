@@ -1,8 +1,10 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { createId } from '@paralleldrive/cuid2';
 import { parse } from 'papaparse';
 import { Readable } from 'stream';
 import { PrismaService } from '../common/prisma/prisma.service';
+
+import { isAfter } from 'date-fns';
 
 @Injectable()
 export class UmkmService {
@@ -52,6 +54,7 @@ export class UmkmService {
         kelengkapan_surat: data.kelengkapan_surat,
         produk: data.produk,
         volume: data.volume,
+        sheet_timestamp: new Date().toISOString(),
         foto: {
           create: data.foto.map((foto: any) => ({
             ...foto,
@@ -184,26 +187,31 @@ export class UmkmService {
             })
             .filter((row) => row != null || row != undefined);
 
-          // // remove existing umkms from cleanedData
-          // cleanedData.forEach((data: any) => {
-          //   const index = existingUmkms.findIndex(
-          //     (umkm) =>
-          //       umkm.koordinat_umkm[0] == data['Titik Koordinat Toko'].split(',')[0] &&
-          //       umkm.koordinat_umkm[1] == data['Titik Koordinat Toko'].split(',')[1],
-          //   );
+          const latestData = await this.prisma.uMKM.findFirst({
+            orderBy: {
+              sheet_timestamp: 'asc',
+            },
+          });
 
-          //   if (index != -1) {
-          //     existingUmkms.splice(index, 1);
-          //   }
-          // });
+          let latestTimestamp = null;
 
-          // remove umkms with older timestamp than the last in db
+          if (latestData.sheet_timestamp) {
+            latestTimestamp = latestData.sheet_timestamp;
+          }
+
+          const filteredData = cleanedData.filter((row) => {
+            if (latestTimestamp) {
+              return isAfter(latestTimestamp, new Date(row['Timestamp']));
+            }
+
+            return row;
+          });
 
           const umkms = await Promise.all(
-            cleanedData.map(async (data) => {
+            filteredData.map(async (data, i) => {
               const allFotos = [
-                ...(data['Foto Produk'] ? data['Foto Produk'].split(',') : []),
                 ...(data['Gambar UMKM'] ? data['Gambar UMKM'].split(',') : []),
+                ...(data['Foto Produk'] ? data['Foto Produk'].split(',') : []),
               ];
 
               const umkm = await this.prisma.uMKM.create({
@@ -220,6 +228,7 @@ export class UmkmService {
                   kelengkapan_surat: data['Surat'],
                   produk: data['Produk'],
                   volume: data['Volume'] ?? '',
+                  sheet_timestamp: new Date(data['Timestamp']),
                   foto: {
                     create: allFotos.map((foto) => ({
                       id: createId(),
@@ -232,8 +241,8 @@ export class UmkmService {
               return umkm;
             }),
           );
-
-          resolve(umkms);
+          // console.log(filteredData);
+          resolve(filteredData);
         },
         error: (error) => {
           reject(error);
@@ -242,7 +251,7 @@ export class UmkmService {
     });
 
     return {
-      message: 'success',
+      message: 'Tambah UMKM dari CSV berhasil',
       data: parsedData,
     };
   }
