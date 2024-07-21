@@ -10,6 +10,7 @@ async function main() {
     create: {
       username: 'admin',
       password: bcrypt.hashSync('admin1234', 10),
+      role: 'ADMIN',
     },
   });
   const user2 = await prisma.user.upsert({
@@ -18,6 +19,7 @@ async function main() {
     create: {
       username: 'user',
       password: bcrypt.hashSync('user1234', 10),
+      role: 'USER',
     },
   });
   const cuidUmkm = 'cjozv9v5z0000a3z1z1q6z7z1';

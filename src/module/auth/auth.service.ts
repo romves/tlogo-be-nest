@@ -19,6 +19,8 @@ export class AuthService {
     console.log(user); 
 
     if (user && (await bcrypt.compareSync(password, user.password))) {
+      const jwtPayload = { id: user.id, username: user.username, role: user.role };
+
       return {
         message: 'success',
         data: {
@@ -26,7 +28,7 @@ export class AuthService {
             id: user.id,
             username: user.username,
           },
-          accessToken: this.jwtService.sign({ username }),
+          accessToken: this.jwtService.sign(jwtPayload),
         },
       };
     } else {

@@ -20,15 +20,15 @@ model User {
   id       String @id @default(cuid())
   username String @unique
   password String
-  // role     Role   @default(USER)
+  role     Role   @default(USER)
 
   @@map("user")
 }
 
-// enum Role {
-//   ADMIN
-//   USER
-// }
+enum Role {
+  ADMIN
+  USER
+}
 
 model UMKM {
   id                String     @id @default(cuid())

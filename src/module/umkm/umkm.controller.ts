@@ -19,17 +19,20 @@ import { UpdateUmkm, updateUmkmSchema } from './model/update-umkm';
 import { UmkmService } from './umkm.service';
 import { ZodValidationPipe } from '../common/validation/zod-validation.pipe';
 import { AuthGuard } from '@nestjs/passport';
+import { OmitDataByRoleInterceptor } from './interceptors/role.interceptor/role.interceptor.';
 
 @Controller('umkm')
 export class UmkmController {
   constructor(private service: UmkmService) {}
 
   @Get('/')
+  @UseInterceptors(new OmitDataByRoleInterceptor())
   getAll() {
     return this.service.getAllUmkm();
   }
 
   @Get('/:id')
+  @UseInterceptors(new OmitDataByRoleInterceptor())
   getById(@Param('id') id: string, res: Response) {
     return this.service.getUmkmById(id);
   }
