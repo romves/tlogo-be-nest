@@ -5,21 +5,25 @@ import { Readable } from 'stream';
 import { PrismaService } from '../common/prisma/prisma.service';
 
 import { isAfter } from 'date-fns';
+import { TPagination } from '../common/types/pagination.types';
 
 @Injectable()
 export class UmkmService {
   constructor(private prisma: PrismaService) {}
 
-  async getAllUmkm() {
+  async getAllUmkm(query: TPagination) {
+    const defaultPerPage = 5;
+    query.perPage = query.perPage || defaultPerPage;
+    query.page = query.page || 1;
+
     const umkms = await this.prisma.uMKM.findMany({
+      skip: query.page * query.perPage,
+      take: query.perPage,
       include: {
         foto: true,
       },
-      orderBy: {
-        sheet_timestamp: 'asc',
-      },
     });
-
+    
     return {
       message: 'success',
       data: umkms,

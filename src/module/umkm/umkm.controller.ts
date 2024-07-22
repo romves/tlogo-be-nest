@@ -8,18 +8,20 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Response } from 'express';
+import { Response, query } from 'express';
 import { CreateUmkm, createUmkmSchema } from './model/create-umkm';
 import { UpdateUmkm, updateUmkmSchema } from './model/update-umkm';
 import { UmkmService } from './umkm.service';
 import { ZodValidationPipe } from '../common/validation/zod-validation.pipe';
 import { AuthGuard } from '@nestjs/passport';
 import { OmitDataByRoleInterceptor } from './interceptors/role.interceptor/role.interceptor.';
+import { TPagination } from '../common/types/pagination.types';
 
 @Controller('umkm')
 export class UmkmController {
@@ -27,8 +29,8 @@ export class UmkmController {
 
   @Get('/')
   @UseInterceptors(new OmitDataByRoleInterceptor())
-  getAll() {
-    return this.service.getAllUmkm();
+  getAll(@Query() query: TPagination) {
+    return this.service.getAllUmkm(query);
   }
 
   @Get('/:id')
