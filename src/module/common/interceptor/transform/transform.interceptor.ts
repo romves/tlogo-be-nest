@@ -22,7 +22,7 @@ export class TransformInterceptor<T>
         statusCode: context.switchToHttp().getResponse().statusCode,
         message: data.message,
         data: data.data,
-        meta: {},
+        meta: data.meta ?? {},
       })),
     );
   }

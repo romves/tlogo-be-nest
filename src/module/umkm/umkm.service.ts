@@ -12,21 +12,33 @@ export class UmkmService {
   constructor(private prisma: PrismaService) {}
 
   async getAllUmkm(query: TPagination) {
-    const defaultPerPage = 5;
+    const defaultPerPage = 10;
     query.perPage = query.perPage || defaultPerPage;
     query.page = query.page || 1;
 
+    const skip = (query.page - 1) * query.perPage;
+
+    const totalCount = await this.prisma.uMKM.count();
+
+    const totalPages = Math.ceil(totalCount / query.perPage);
+
     const umkms = await this.prisma.uMKM.findMany({
-      skip: query.page * query.perPage,
+      skip: skip,
       take: query.perPage,
       include: {
         foto: true,
       },
     });
-    
+
     return {
       message: 'success',
       data: umkms,
+      meta: {
+        page: query.page,
+        perPage: query.perPage,
+        totalPages: totalPages,
+        totalCount: totalCount,
+      },
     };
   }
 
