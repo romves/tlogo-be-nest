@@ -15,7 +15,7 @@ export const updateUmkmSchema = z.object({
     z.object({
       url_foto: z.string().min(1).max(255),
     }),
-  ),
+  ).optional(),
 });
 
 export type UpdateUmkm = z.infer<typeof updateUmkmSchema>;

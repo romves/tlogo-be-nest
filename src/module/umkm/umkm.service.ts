@@ -15,6 +15,9 @@ export class UmkmService {
       include: {
         foto: true,
       },
+      orderBy: {
+        sheet_timestamp: 'asc',
+      },
     });
 
     return {
@@ -55,12 +58,16 @@ export class UmkmService {
         produk: data.produk,
         volume: data.volume,
         sheet_timestamp: new Date().toISOString(),
-        foto: {
-          create: data.foto.map((foto: any) => ({
-            ...foto,
-            id: createId(),
-          })),
-        },
+        ...(data.foto && data.foto.length > 0
+          ? {
+              foto: {
+                create: data.foto.map((foto: any) => ({
+                  ...foto,
+                  id: createId(),
+                })),
+              },
+            }
+          : {}),
       },
     });
 
@@ -115,9 +122,12 @@ export class UmkmService {
         },
       });
 
+      console.log(umkm);
+
       if (!umkm) throw new HttpException('Umkm not found', 404);
 
       if (data.foto) {
+        console.log(data.foto);
         await tx.fotoUMKM.deleteMany({
           where: {
             umkm_id: id,
