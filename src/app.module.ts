@@ -12,6 +12,7 @@ import { ErrorFilter } from './module/common/filter/error/error.filter';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { JwtGuard } from './module/auth/guard/jwt/jwt.guard';
 import { UserModule } from './module/users/user.module';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Global()
 @Module({
@@ -19,6 +20,10 @@ import { UserModule } from './module/users/user.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 10,
+    }]),
     PrismaModule,
     UmkmModule,
     ValidationModule,

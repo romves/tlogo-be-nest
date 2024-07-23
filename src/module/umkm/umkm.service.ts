@@ -138,12 +138,9 @@ export class UmkmService {
         },
       });
 
-      console.log(umkm);
-
       if (!umkm) throw new HttpException('Umkm not found', 404);
 
       if (data.foto) {
-        console.log(data.foto);
         await tx.fotoUMKM.deleteMany({
           where: {
             umkm_id: id,
@@ -209,6 +206,14 @@ export class UmkmService {
 
               if (row['Titik Koordinat Toko'] == '') return;
 
+              row['Nomor HP'] = row['Nomor HP'].replace(/^0/g, '62');
+
+              row['Titik Koordinat Toko'] = row['Titik Koordinat Toko'].replace(/[^0-9.,+-]/g, '');
+              
+              if (new Date(row['Timestamp']) instanceof Date && isNaN(new Date(row['Timestamp']).getTime())) {
+                row['Timestamp'] = new Date().toISOString();
+              }
+
               return row;
             })
             .filter((row) => row != null || row != undefined);
@@ -221,7 +226,7 @@ export class UmkmService {
 
           let latestTimestamp = null;
 
-          if (latestData.sheet_timestamp) {
+          if (latestData && latestData?.sheet_timestamp) {
             latestTimestamp = latestData.sheet_timestamp;
           }
 
@@ -240,6 +245,7 @@ export class UmkmService {
                 ...(data['Foto Produk'] ? data['Foto Produk'].split(',') : []),
               ];
 
+
               const umkm = await this.prisma.uMKM.create({
                 data: {
                   id: createId(),
@@ -252,7 +258,7 @@ export class UmkmService {
                   nomor_hp: data['Nomor HP'],
                   rentang_harga: data['Rentang Harga'] ?? '',
                   kelengkapan_surat: data['Surat'],
-                  produk: data['Produk'],
+                  produk: data['Kategori'] || data['Produk'],
                   volume: data['Volume'] ?? '',
                   sheet_timestamp: new Date(data['Timestamp']),
                   foto: {
@@ -267,7 +273,6 @@ export class UmkmService {
               return umkm;
             }),
           );
-          // console.log(filteredData);
           resolve(filteredData);
         },
         error: (error) => {
@@ -277,7 +282,7 @@ export class UmkmService {
     });
 
     return {
-      message: 'Tambah UMKM dari CSV berhasil',
+      message: `Tambah ${(<unknown[]>parsedData).length} UMKM dari CSV berhasil`,
       data: parsedData,
     };
   }
