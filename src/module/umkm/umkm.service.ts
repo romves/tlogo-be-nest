@@ -16,7 +16,7 @@ export class UmkmService {
     query.perPage = query.perPage || defaultPerPage;
     query.page = query.page || 1;
 
-    const skip = (query.page - 1) * query.perPage;
+    const skip = (Number(query.page) - 1) * query.perPage;
 
     const totalCount = await this.prisma.uMKM.count();
 
