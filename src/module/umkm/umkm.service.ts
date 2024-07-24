@@ -156,7 +156,7 @@ export class UmkmService {
 
       if (!umkm) throw new HttpException('Umkm not found', 404);
 
-      if (data.foto) {
+      if (data.foto.length != 0) {
         await tx.fotoUMKM.deleteMany({
           where: {
             umkm_id: id,
