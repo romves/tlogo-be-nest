@@ -24,7 +24,7 @@ export class UmkmService {
 
     const umkms = await this.prisma.uMKM.findMany({
       skip: skip,
-      take: query.perPage,
+      take: Number(query.perPage),
       include: {
         foto: true,
       },
