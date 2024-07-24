@@ -18,12 +18,15 @@ export class TransformInterceptor<T>
 {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
-      map((data) => ({
-        statusCode: context.switchToHttp().getResponse().statusCode,
-        message: data.message,
-        data: data.data,
-        meta: data.meta ?? {},
-      })),
+      map((data, message) => {
+        console.log('data', data.message);
+        return ({
+          statusCode: context.switchToHttp().getResponse().statusCode,
+          message: data.message,
+          data: data.data ?? data,
+          meta: data.meta ?? {},
+        });
+      }),
     );
   }
 }

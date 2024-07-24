@@ -33,6 +33,12 @@ export class UmkmController {
     return this.service.getAllUmkm(query);
   }
 
+  @Get('/maps')
+  @UseInterceptors(new OmitDataByRoleInterceptor())
+  getAllUMKMLoc() {
+    return this.service.getUMKMforMaps();
+  }
+
   @Get('/:id')
   @UseInterceptors(new OmitDataByRoleInterceptor())
   getById(@Param('id') id: string, res: Response) {

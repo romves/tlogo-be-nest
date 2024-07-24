@@ -42,6 +42,22 @@ export class UmkmService {
     };
   }
 
+  async getUMKMforMaps() {
+    const umkms = await this.prisma.uMKM.findMany({
+      select: {
+        id: true,
+        nama: true,
+        alamat: true,
+        koordinat_umkm: true,
+      },
+    });
+
+    return {
+      message: 'success',
+      data: umkms,
+    };
+  }
+
   async getUmkmById(id: string) {
     const umkm = await this.prisma.uMKM.findFirst({
       where: {
@@ -182,7 +198,7 @@ export class UmkmService {
     };
   }
 
-  async createUmkmBatchCSV(file: any) {
+  async OldcreateUmkmBatchCSV(file: any) {
     const data = Readable.from(file.buffer);
 
     const parsedData = await new Promise((resolve, reject) => {
@@ -208,9 +224,15 @@ export class UmkmService {
 
               row['Nomor HP'] = row['Nomor HP'].replace(/^0/g, '62');
 
-              row['Titik Koordinat Toko'] = row['Titik Koordinat Toko'].replace(/[^0-9.,+-]/g, '');
-              
-              if (new Date(row['Timestamp']) instanceof Date && isNaN(new Date(row['Timestamp']).getTime())) {
+              row['Titik Koordinat Toko'] = row['Titik Koordinat Toko'].replace(
+                /[^0-9.,+-]/g,
+                '',
+              );
+
+              if (
+                new Date(row['Timestamp']) instanceof Date &&
+                isNaN(new Date(row['Timestamp']).getTime())
+              ) {
                 row['Timestamp'] = new Date().toISOString();
               }
 
@@ -244,7 +266,6 @@ export class UmkmService {
                 ...(data['Gambar UMKM'] ? data['Gambar UMKM'].split(',') : []),
                 ...(data['Foto Produk'] ? data['Foto Produk'].split(',') : []),
               ];
-
 
               const umkm = await this.prisma.uMKM.create({
                 data: {
@@ -284,6 +305,129 @@ export class UmkmService {
     return {
       message: `Tambah ${(<unknown[]>parsedData).length} UMKM dari CSV berhasil`,
       data: parsedData,
+    };
+  }
+
+  async createUmkmBatchCSV(file: any) {
+    const data = Readable.from(file.buffer);
+
+    const parsedData = await new Promise((resolve, reject) => {
+      parse(data, {
+        header: true,
+        worker: true,
+        complete: async (results) => {
+          const cleanedData = results.data
+            .map((row) => {
+              // delete row['Timestamp'];
+              // delete row['Nama Produk'];
+              // delete row['Produk'];
+              delete row['Volume'];
+              // delete row['Harga '];
+              delete row['Harga'];
+              delete row['Email Address'];
+              delete row['Nama Produk_1'];
+              // delete row['Volume_1'];
+
+              if (row['Timestamp'] == '') return;
+
+              if (row['Titik Koordinat Toko'] == '') return;
+
+              row['Nomor HP'] = row['Nomor HP'].replace(/^0/g, '62');
+
+              row['Titik Koordinat Toko'] = row['Titik Koordinat Toko'].replace(
+                /[^0-9.,+-]/g,
+                '',
+              );
+
+              if (
+                new Date(row['Timestamp']) instanceof Date &&
+                isNaN(new Date(row['Timestamp']).getTime())
+              ) {
+                row['Timestamp'] = new Date().toISOString();
+              }
+
+              return row;
+            })
+            .filter((row) => row != null || row != undefined);
+
+          const latestData = await this.prisma.uMKM.findFirst({
+            orderBy: {
+              sheet_timestamp: 'asc',
+            },
+          });
+
+          let latestTimestamp = null;
+
+          if (latestData && latestData?.sheet_timestamp) {
+            latestTimestamp = latestData.sheet_timestamp;
+          }
+
+          const filteredData = cleanedData.filter((row) => {
+            if (latestTimestamp) {
+              return isAfter(latestTimestamp, new Date(row['Timestamp']));
+            }
+            return row;
+          });
+
+          resolve(filteredData);
+        },
+        error: (error) => {
+          reject(error);
+        },
+      });
+    });
+
+    const batchSize = 50;
+    const parsedDataArray = parsedData as unknown[];
+    const totalBatches = Math.ceil(parsedDataArray.length / batchSize);
+    let totalProcessed = 0;
+
+    for (let i = 0; i < totalBatches; i++) {
+      const start = i * batchSize;
+      const end = Math.min((i + 1) * batchSize, parsedDataArray.length);
+      const batch = parsedDataArray.slice(start, end);
+
+      const umkms = await Promise.all(
+        batch.map(async (data) => {
+          const allFotos = [
+            ...(data['Gambar UMKM'] ? data['Gambar UMKM'].split(',') : []),
+            ...(data['Foto Produk'] ? data['Foto Produk'].split(',') : []),
+          ];
+
+          const umkm = await this.prisma.uMKM.create({
+            data: {
+              id: createId(),
+              nama: data['Nama Toko'],
+              alamat: data['Alamat'] ?? '',
+              koordinat_umkm: this.convertCoordinate(
+                data['Titik Koordinat Toko'],
+              ),
+              nama_pemilik: data['Nama Pemilik'],
+              nomor_hp: data['Nomor HP'],
+              rentang_harga: data['Rentang Harga'] ?? '',
+              kelengkapan_surat: data['Surat'],
+              produk: data['Kategori'] || data['Produk'],
+              volume: data['Volume'] ?? '',
+              sheet_timestamp: new Date(data['Timestamp']),
+              foto: {
+                create: allFotos.map((foto) => ({
+                  id: createId(),
+                  url_foto: this.convertGoogleDriveImageUrl(foto),
+                })),
+              },
+            },
+          });
+
+          return umkm;
+        }),
+      );
+
+      totalProcessed += umkms.length;
+    }
+
+    return {
+      message: `Tambah ${totalProcessed} UMKM dari CSV berhasil`,
+      data: parsedDataArray,
     };
   }
 
