@@ -318,15 +318,10 @@ export class UmkmService {
         complete: async (results) => {
           const cleanedData = results.data
             .map((row) => {
-              // delete row['Timestamp'];
-              // delete row['Nama Produk'];
-              // delete row['Produk'];
               delete row['Volume'];
-              // delete row['Harga '];
               delete row['Harga'];
               delete row['Email Address'];
               delete row['Nama Produk_1'];
-              // delete row['Volume_1'];
 
               if (row['Timestamp'] == '') return;
 
@@ -343,32 +338,66 @@ export class UmkmService {
                 new Date(row['Timestamp']) instanceof Date &&
                 isNaN(new Date(row['Timestamp']).getTime())
               ) {
-                row['Timestamp'] = new Date().toISOString();
+                row['Timestamp'] = new Date('7/13/2024 11:41:53').toISOString();
               }
 
               return row;
             })
             .filter((row) => row != null || row != undefined);
 
-          const latestData = await this.prisma.uMKM.findFirst({
+          const newestData = await this.prisma.uMKM.findFirst({
             orderBy: {
-              sheet_timestamp: 'asc',
+              sheet_timestamp: 'desc', 
             },
           });
 
           let latestTimestamp = null;
 
-          if (latestData && latestData?.sheet_timestamp) {
-            latestTimestamp = latestData.sheet_timestamp;
+          if (newestData && newestData?.sheet_timestamp) {
+            latestTimestamp = newestData.sheet_timestamp;
           }
 
-          const filteredData = cleanedData.filter((row) => {
-            if (latestTimestamp) {
-              return isAfter(latestTimestamp, new Date(row['Timestamp']));
-            }
-            return row;
-          });
+          const filteredData = cleanedData
+          .filter((row) => {
+            console.log(new Date(row['Timestamp']), latestTimestamp, isAfter(new Date(row['Timestamp']), latestTimestamp));
+            return !latestTimestamp || isAfter(new Date(row['Timestamp']), latestTimestamp);
+          })
+          .slice(0, 40); // Limit to 50 items
 
+          const umkms = await Promise.all(
+            filteredData.map(async (data, i) => {
+              const allFotos = [
+                ...(data['Gambar UMKM'] ? data['Gambar UMKM'].split(',') : []),
+                ...(data['Foto Produk'] ? data['Foto Produk'].split(',') : []),
+              ];
+
+              const umkm = await this.prisma.uMKM.create({
+                data: {
+                  id: createId(),
+                  nama: data['Nama Toko'],
+                  alamat: data['Alamat'] ?? '',
+                  koordinat_umkm: this.convertCoordinate(
+                    data['Titik Koordinat Toko'],
+                  ),
+                  nama_pemilik: data['Nama Pemilik'],
+                  nomor_hp: data['Nomor HP'],
+                  rentang_harga: data['Rentang Harga'] ?? '',
+                  kelengkapan_surat: data['Surat'],
+                  produk: data['Kategori'] || data['Produk'],
+                  volume: data['Volume'] ?? '',
+                  sheet_timestamp: new Date(data['Timestamp']),
+                  foto: {
+                    create: allFotos.map((foto) => ({
+                      id: createId(),
+                      url_foto: this.convertGoogleDriveImageUrl(foto),
+                    })),
+                  },
+                },
+              });
+
+              return umkm;
+            }),
+          );
           resolve(filteredData);
         },
         error: (error) => {
@@ -377,57 +406,9 @@ export class UmkmService {
       });
     });
 
-    const batchSize = 50;
-    const parsedDataArray = parsedData as unknown[];
-    const totalBatches = Math.ceil(parsedDataArray.length / batchSize);
-    let totalProcessed = 0;
-
-    for (let i = 0; i < totalBatches; i++) {
-      const start = i * batchSize;
-      const end = Math.min((i + 1) * batchSize, parsedDataArray.length);
-      const batch = parsedDataArray.slice(start, end);
-
-      const umkms = await Promise.all(
-        batch.map(async (data) => {
-          const allFotos = [
-            ...(data['Gambar UMKM'] ? data['Gambar UMKM'].split(',') : []),
-            ...(data['Foto Produk'] ? data['Foto Produk'].split(',') : []),
-          ];
-
-          const umkm = await this.prisma.uMKM.create({
-            data: {
-              id: createId(),
-              nama: data['Nama Toko'],
-              alamat: data['Alamat'] ?? '',
-              koordinat_umkm: this.convertCoordinate(
-                data['Titik Koordinat Toko'],
-              ),
-              nama_pemilik: data['Nama Pemilik'],
-              nomor_hp: data['Nomor HP'],
-              rentang_harga: data['Rentang Harga'] ?? '',
-              kelengkapan_surat: data['Surat'],
-              produk: data['Kategori'] || data['Produk'],
-              volume: data['Volume'] ?? '',
-              sheet_timestamp: new Date(data['Timestamp']),
-              foto: {
-                create: allFotos.map((foto) => ({
-                  id: createId(),
-                  url_foto: this.convertGoogleDriveImageUrl(foto),
-                })),
-              },
-            },
-          });
-
-          return umkm;
-        }),
-      );
-
-      totalProcessed += umkms.length;
-    }
-
     return {
-      message: `Tambah ${totalProcessed} UMKM dari CSV berhasil`,
-      data: parsedDataArray,
+      message: `Tambah ${(<unknown[]>parsedData).length} UMKM dari CSV berhasil`,
+      data: parsedData,
     };
   }
 
