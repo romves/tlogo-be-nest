@@ -5,16 +5,18 @@ import { Readable } from 'stream';
 import { PrismaService } from '../common/prisma/prisma.service';
 
 import { isAfter } from 'date-fns';
-import { TPagination } from '../common/types/pagination.types';
+import { TQuery } from '../common/types/query.types';
 
 @Injectable()
 export class UmkmService {
   constructor(private prisma: PrismaService) {}
 
-  async getAllUmkm(query: TPagination) {
+  async getAllUmkm(query: TQuery) {
     const defaultPerPage = 10;
     query.perPage = query.perPage || defaultPerPage;
     query.page = query.page || 1;
+
+    const term = query.search || '';
 
     const skip = (Number(query.page) - 1) * query.perPage;
 
@@ -23,6 +25,28 @@ export class UmkmService {
     const totalPages = Math.ceil(totalCount / query.perPage);
 
     const umkms = await this.prisma.uMKM.findMany({
+      where: {
+        OR: [
+          {
+            nama: {
+              contains: term,
+              mode: 'insensitive',
+            },
+          },
+          {
+            produk: {
+              contains: term,
+              mode: 'insensitive',
+            },
+          },
+          {
+            alamat: {
+              contains: term,
+              mode: 'insensitive',
+            },
+          }
+        ],
+      },
       skip: skip,
       take: Number(query.perPage),
       include: {
@@ -347,7 +371,7 @@ export class UmkmService {
 
           const newestData = await this.prisma.uMKM.findFirst({
             orderBy: {
-              sheet_timestamp: 'desc', 
+              sheet_timestamp: 'desc',
             },
           });
 
@@ -358,11 +382,18 @@ export class UmkmService {
           }
 
           const filteredData = cleanedData
-          .filter((row) => {
-            console.log(new Date(row['Timestamp']), latestTimestamp, isAfter(new Date(row['Timestamp']), latestTimestamp));
-            return !latestTimestamp || isAfter(new Date(row['Timestamp']), latestTimestamp);
-          })
-          .slice(0, 40); // Limit to 50 items
+            .filter((row) => {
+              console.log(
+                new Date(row['Timestamp']),
+                latestTimestamp,
+                isAfter(new Date(row['Timestamp']), latestTimestamp),
+              );
+              return (
+                !latestTimestamp ||
+                isAfter(new Date(row['Timestamp']), latestTimestamp)
+              );
+            })
+            .slice(0, 10); // Limit to 10 items limit vercel
 
           const umkms = await Promise.all(
             filteredData.map(async (data, i) => {

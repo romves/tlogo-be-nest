@@ -21,7 +21,7 @@ import { UmkmService } from './umkm.service';
 import { ZodValidationPipe } from '../common/validation/zod-validation.pipe';
 import { AuthGuard } from '@nestjs/passport';
 import { OmitDataByRoleInterceptor } from './interceptors/role.interceptor/role.interceptor.';
-import { TPagination } from '../common/types/pagination.types';
+import { TQuery } from '../common/types/query.types';
 
 @Controller('umkm')
 export class UmkmController {
@@ -29,7 +29,7 @@ export class UmkmController {
 
   @Get('/')
   @UseInterceptors(new OmitDataByRoleInterceptor())
-  getAll(@Query() query: TPagination) {
+  getAll(@Query() query: TQuery) {
     return this.service.getAllUmkm(query);
   }
 

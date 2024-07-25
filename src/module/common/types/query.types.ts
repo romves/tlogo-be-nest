@@ -1,8 +1,9 @@
 import { z } from 'zod';
 
-export const paginationSchema = z.object({
+export const querySchema = z.object({
   page: z.number().int().positive().optional(),
   perPage: z.number().int().positive().optional(),
+  search: z.string().optional(),
 });
 
-export type TPagination = z.infer<typeof paginationSchema>;
+export type TQuery = z.infer<typeof querySchema>;
