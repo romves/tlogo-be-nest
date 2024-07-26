@@ -342,7 +342,7 @@ export class UmkmService {
         complete: async (results) => {
           const cleanedData = results.data
             .map((row) => {
-              delete row['Volume'];
+              // delete row['Volume'];
               delete row['Harga'];
               delete row['Email Address'];
               delete row['Nama Produk_1'];
